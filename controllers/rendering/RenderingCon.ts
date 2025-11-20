@@ -12,31 +12,45 @@ export const handleExport = async (req: Request, res: Response) => {
   const { inputProps, format, compositionId } = req.body;
 
   console.log("Receive Props: ", inputProps);
+  console.log("Format:", format);
+  console.log("Composition ID:", compositionId);
 
   try {
+    // Check if entry file exists
     if (!fs.existsSync(entry)) {
+      console.error("❌ Entry file not found:", entry);
       return res.status(404).json({ error: "Remotion entry file not found" });
     }
+
+    console.log("✅ Entry file exists:", entry);
+    console.log("📦 Starting bundle...");
+
     const bundleLocation = await bundle({
       entryPoint: path.resolve(entry),
       webpackOverride: (config) => config,
     });
 
+    console.log("✅ Bundle complete:", bundleLocation);
+    console.log("🔍 Selecting composition...");
+
+    // 🔧 FIX: Let Remotion download and use Chrome Headless Shell automatically
+    // Do NOT specify browserExecutable - it will use the correct Chrome Headless Shell
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: compositionId,
       onBrowserDownload: () => {
-        console.log("A compatible browser is being downloaded...");
-        // You can return an object here to observe the download progress
+        console.log("📥 Downloading Chrome Headless Shell...");
         return {
+          version: '2024-11-20',
           onProgress: ({ percent }) => {
-            console.log(`${Math.round(percent * 100)}% downloaded`);
+            console.log(`📥 Download progress: ${Math.round(percent * 100)}%`);
           },
-          version: "recommended"
         };
       },
       inputProps,
     });
+
+    console.log("✅ Composition selected:", composition.id);
 
     const tmpBaseName = `${compositionId}-${Date.now()}`;
     const tmpDir = os.tmpdir();
@@ -52,6 +66,7 @@ export const handleExport = async (req: Request, res: Response) => {
       outputLocation: mp4Path,
       inputProps,
       concurrency: 1,
+      // Let Remotion use Chrome Headless Shell - no browserExecutable needed
     });
 
     console.log("✅ Render complete.");
@@ -103,6 +118,15 @@ export const handleExport = async (req: Request, res: Response) => {
       format: finalFormat,
     });
   } catch (error: any) {
-    res.status(404).json({ message: "Error rendering video" });
+    // 🔴 DETAILED ERROR LOGGING
+    console.error("❌❌❌ RENDER ERROR ❌❌❌");
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    
+    res.status(500).json({ 
+      message: "Error rendering video", 
+      error: error.message,
+      details: error.toString()
+    });
   }
 };
