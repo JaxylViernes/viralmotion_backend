@@ -12,7 +12,6 @@ import rendersroutes from "./routes/database/renders.ts";
 import datasetsdbupload from "./routes/database/datasetsupload.ts";
 import getDatasetFronUploadsroute from "./routes/apis/fromuploadsextraction.ts";
 import GoogleRoutes from './routes/google.ts';
-// import mainRenderingRoute from ""
 import cors from "cors";
 import fs from "fs";
 import { distentry, entry, entry2 } from "./controllers/entrypoint.ts";
@@ -20,10 +19,26 @@ import session from 'express-session';
 import passport from 'passport';
 
 const app = express();
-app.use(cors({ origin: "*" }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ✅ Enhanced CORS configuration - MUST be before routes
+app.use(cors({ 
+  origin: "*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
+// ✅ Increase payload limits for video rendering
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ✅ Increase timeout for video rendering endpoints (10 minutes)
+app.use('/generatevideo', (req, res, next) => {
+  req.setTimeout(600000); // 10 minutes
+  res.setTimeout(600000);
+  next();
+});
 
 app.use(
   session({
@@ -35,13 +50,10 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-// dotenv.config();
-// const geminiapi = process.env.GEMINI_API_KEY!;
 
-// ViteExpress.config({ viteConfigFile: "./frontend/vite.config.ts" });
 app.set("trust proxy", true);
 
-// app.use('/data', dataroutes);
+// Routes
 app.use("/api", airoutes);
 app.use("/generatevideo", renderingroutes);
 app.use("/uploadhandler", uploadroutes);
@@ -56,13 +68,23 @@ app.use("/datasets", datasetsdbupload);
 app.use("/fromuploadsdataset", getDatasetFronUploadsroute);
 app.use("/authenticate", GoogleRoutes);
 
-app.listen(3000, "0.0.0.0", () => {
-  // console.log(__dirname);
-  // console.log(geminiapi);
-  // console.log(path.join(process.cwd(),"./server/public/datasets"));
+// ✅ Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('❌ Global Error Handler:', err);
+  res.status(err.status || 500).json({
+    error: 'Internal Server Error',
+    message: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const HOST = process.env.HOST || "0.0.0.0";
+
+app.listen(PORT, HOST, () => {
   console.log("entry 1: ", fs.existsSync(entry));
   console.log("entry 2: ", fs.existsSync(entry2));
   console.log("disentry: ", fs.existsSync(distentry));
-
-  console.log("Server is running on http://0.0.0.0:3000");
+  console.log(`Server is running on http://${HOST}:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
