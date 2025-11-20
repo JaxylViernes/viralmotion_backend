@@ -14,13 +14,18 @@ const checkSystemResources = () => {
   const totalMem = os.totalmem();
   const freeMemGB = (freeMem / 1024 / 1024 / 1024).toFixed(2);
   const totalMemGB = (totalMem / 1024 / 1024 / 1024).toFixed(2);
+  const usedPercent = ((1 - freeMem / totalMem) * 100).toFixed(1);
   
-  console.log(`💾 Memory: ${freeMemGB}GB free / ${totalMemGB}GB total`);
+  console.log(`💾 Memory: ${freeMemGB}GB free / ${totalMemGB}GB total (${usedPercent}% used)`);
   
-  // Warning if less than 500MB free
-  if (freeMem < 500 * 1024 * 1024) {
-    console.warn('⚠️ LOW MEMORY WARNING: Less than 500MB available');
-    return false;
+  // More lenient check: warn at 200MB, only block in production at 100MB
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const minMemory = isDevelopment ? 100 * 1024 * 1024 : 200 * 1024 * 1024; // 100MB dev, 200MB prod
+  
+  if (freeMem < minMemory) {
+    const warning = `⚠️ LOW MEMORY WARNING: Less than ${isDevelopment ? '100MB' : '200MB'} available`;
+    console.warn(warning);
+    return isDevelopment; // Allow in dev, block in prod
   }
   return true;
 };
@@ -57,7 +62,7 @@ export const handleExport = async (req: Request, res: Response) => {
   
   // Check system resources
   const hasEnoughMemory = checkSystemResources();
-  if (!hasEnoughMemory) {
+  if (!hasEnoughMemory && process.env.NODE_ENV === 'production') {
     console.error("❌ Insufficient memory to render video");
     return res.status(503).json({ 
       error: "Insufficient server resources",
