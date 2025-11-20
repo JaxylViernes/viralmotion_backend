@@ -92,15 +92,6 @@ export const handleExport = async (req: Request, res: Response) => {
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: compositionId,
-      onBrowserDownload: () => {
-        console.log("📥 Downloading Chrome Headless Shell...");
-        return {
-          version: '2024-11-20',
-          onProgress: ({ percent }) => {
-            console.log(`📥 Download progress: ${Math.round(percent * 100)}%`);
-          },
-        };
-      },
       inputProps,
       timeoutInMilliseconds: 90000, // 90 seconds timeout for composition selection
     });
