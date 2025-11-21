@@ -20,6 +20,7 @@
     "@remotion/bundler": "^4.0.376",
     "@remotion/cli": "^4.0.376",
     "@remotion/eslint-config": "^4.0.376",
+    "@remotion/lambda": "^4.0.377",
     "@remotion/renderer": "^4.0.376",
     "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.75.1",

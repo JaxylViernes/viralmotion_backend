@@ -12,6 +12,7 @@ import * as StoryTellingController from "../controllers/rendering/StoryTellingCo
 import * as CurveLineTrendController from "../controllers/rendering/CurveLineTrendCon.ts";
 import * as NewTexttypingController from "../controllers/rendering/NewTextTypingCon.ts";
 import * as MainRenderingController from "../controllers/rendering/RenderingCon.ts";
+import * as LambdaController from "../controllers/rendering/lambdaRenderingController.ts";
 
 const router = Router();
 
@@ -39,6 +40,9 @@ router.post("/storytelling", StoryTellingController.handleExport);
 router.post("/curvelinetrend", CurveLineTrendController.handleExport);
 
 router.post('/render-video', MainRenderingController.handleExport);
+
+router.post('/lambda-render', LambdaController.startLambdaRender);
+router.get('/lambda-status/:renderId', LambdaController.getLambdaRenderStatus);
 
 router.get("/health", (req, res) => {
   res.json({
