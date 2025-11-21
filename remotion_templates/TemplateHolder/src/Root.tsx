@@ -134,7 +134,7 @@ export const RemotionRoot: React.FC = () => {
           sound: typingdata.sound,
         }}
       />
-      <Composition
+      {/* <Composition
         id="QuoteComposition"
         component={QuoteComposition}
         durationInFrames={1} // placeholder, gets overridden ✔️
@@ -157,7 +157,26 @@ export const RemotionRoot: React.FC = () => {
             durationInFrames: durationSeconds * 30,
           };
         }}
-      />
+      /> */}
+
+      <Composition
+  id="QuoteComposition"
+  component={QuoteComposition}
+  durationInFrames={90}  // ← Fixed 3 seconds for testing
+  fps={30}
+  height={1920}
+  width={1080}
+  defaultProps={{
+    quote: "Sample",
+    author: "sample",
+    backgroundImage:
+      "https://res.cloudinary.com/dnxc1lw18/image/upload/v1760979566/bg11_deliyh.jpg",
+    fontFamily: "Arial, sans-serif",
+    fontSize: 1,
+    fontColor: "white",
+  }}
+  // Remove calculateMetadata entirely for now
+/>
 
       <Composition
         id="KpiFlipCard"
